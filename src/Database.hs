@@ -13,6 +13,11 @@ module Database (
   , insertStudent
   , updateStudentById
   , deleteStudentById
+  , getCourses
+  , getCourseById
+  , insertCourse
+  , updateCourseById
+  , deleteCourseById
 ) where
 
 
@@ -64,14 +69,16 @@ dbMigration = do
     withDbRun $ runMigration $ migrate entityDefs $ entityDef (Nothing :: Maybe StudentCourse)
 
 
--- Helper function to convert the URL ID string to the needed 64 bit integer primary key
+{------------------------------------------------------------------------------------------}
+-- Start Students
+{------------------------------------------------------------------------------------------}
 
+-- Helper function to convert the URL ID string to the needed 64 bit integer primary key
 getStudentIdKey :: Maybe Data.ByteString.ByteString -> Key Student
 getStudentIdKey maybeIdBS = toSqlKey studentIdInt64
     where
         studentIdBS = fromMaybe ("-1" :: Data.ByteString.ByteString) maybeIdBS
         studentIdInt64 = read (Data.ByteString.Char8.unpack studentIdBS) :: Int64
-
 
 insertStudent :: Student -> IO (Key Student)
 -- Create a new Student row in the database
@@ -112,9 +119,9 @@ updateStudentById maybeIdBS studentJSON = do
             -- Create an updated student record
             let studentUpdated = Student {
                 studentFirstname = fromMaybe (studentFirstname student) (studentJSONFirstname studentJSON),
-                studentLastname = fromMaybe (studentLastname student) (studentJSONLastname studentJSON),
-                studentEmail = fromMaybe (studentEmail student) (studentJSONEmail studentJSON),
-                studentYear = fromMaybe (studentYear student) (studentJSONYear studentJSON)
+                studentLastname  = fromMaybe (studentLastname student) (studentJSONLastname studentJSON),
+                studentEmail     = fromMaybe (studentEmail student) (studentJSONEmail studentJSON),
+                studentYear      = fromMaybe (studentYear student) (studentJSONYear studentJSON)
             }
             -- Update the student's fields in the database
             withDbRun $ DbSql.update studentKeyId [
@@ -138,3 +145,69 @@ deleteStudentById maybeIdBS = do
             -- Delete the student from the database
             withDbRun $ DbSql.delete studentKeyId
             return (studentKeyId, Just student)
+
+{------------------------------------------------------------------------------------------}
+-- End Students
+{------------------------------------------------------------------------------------------}
+
+
+{------------------------------------------------------------------------------------------}
+-- Courses
+{------------------------------------------------------------------------------------------}
+
+getCourseIdKey :: Maybe Data.ByteString.ByteString -> Key Course
+getCourseIdKey maybeIdBS = toSqlKey courseIdInt64
+    where
+        courseIdBS  = fromMaybe ("-1" :: Data.ByteString.ByteString) maybeIdBS
+        courseIdInt64 = read (Data.ByteString.Char8.unpack courseIdBS) :: Int64
+
+insertCourse :: Course -> IO (Key Course)
+insertCourse course = withDbRun $ DbSql.insert course
+
+getCourses :: Maybe Data.ByteString.ByteString -> Maybe Data.ByteString.ByteString -> IO [Entity Course]
+getCourses maybeLimitTo maybeOffsetBy = do
+  let limitToBS   = fromMaybe ("10" :: Data.ByteString.ByteString) maybeLimitTo
+  let offsetByBS  = fromMaybe ("0" :: Data.ByteString.ByteString) maybeOffsetBy
+  let limitToInt  = read (Data.ByteString.Char8.unpack limitToBS) :: Int
+  let offsetByInt = read (Data.ByteString.Char8.unpack offsetByBS) :: Int
+  withDbRun $ DbSql.selectList ([] :: [Filter Course]) [LimitTo limitToInt, OffsetBy offsetByInt]
+
+
+getCourseById :: Maybe Data.ByteString.ByteString -> IO (Key Course, Maybe Course)
+getCourseById maybeIdBS = do
+    let courseIdKey = getCourseIdKey maybeIdBS
+    maybeCourse <- withDbRun $ DbSql.get courseIdKey
+    return (courseIdKey, maybeCourse)
+
+
+updateCourseById :: Maybe Data.ByteString.ByteString -> CourseJSON -> IO (Key Course, Maybe Course)
+updateCourseById maybeIdBS courseJSON = do
+    let courseIdKey = getCourseIdKey maybeIdBS
+    (courseKeyId, maybeCourse) <- getCourseById maybeIdBS
+    case maybeCourse of
+        Nothing -> return (courseKeyId, Nothing)
+        Just course -> do
+            let courseUpdated = Course {
+                courseTitle      = fromMaybe (courseTitle course) (courseJSONTitle courseJSON),
+                courseCode       = fromMaybe (courseCode course) (courseJSONCode courseJSON),
+                courseDepartment = fromMaybe (courseDepartment course) (courseJSONDepartment courseJSON),
+                courseCredits    = fromMaybe (courseCredits course) (courseJSONCredits courseJSON)
+            }
+            withDbRun $ DbSql.update courseKeyId [
+                    CourseTitle      =. courseTitle courseUpdated,
+                    CourseCode       =. courseCode courseUpdated,
+                    CourseDepartment =. courseDepartment courseUpdated,
+                    CourseCredits    =. courseCredits courseUpdated
+                ]
+            return (courseKeyId, Just courseUpdated)
+
+
+deleteCourseById :: Maybe Data.ByteString.ByteString -> IO (Key Course, Maybe Course)
+deleteCourseById maybeIdBS = do
+    let courseIdKey = getCourseIdKey maybeIdBS
+    (courseKeyId, maybeCourse) <- getCourseById maybeIdBS
+    case maybeCourse of
+        Nothing -> return (courseIdKey, Nothing)
+        Just course -> do
+            withDbRun $ DbSql.delete courseKeyId
+            return (courseKeyId, Just course)

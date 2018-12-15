@@ -20,7 +20,7 @@ import Data.Maybe
 import Data.Aeson
 import Control.Monad.IO.Class (liftIO)
 import Database.Persist
-    
+
 
 -- Here is a top level router
 -- This will define the base and other routes
@@ -29,17 +29,8 @@ mainRouter :: Snap ()
 mainRouter =  route [
                   (    "", writeBS "") -- Base / route
                 , ("students", studentsRouter) -- /students route
+                , ("courses", coursesRouter) -- /courses route
               ]
-              
-
-studentsRouter :: Snap ()
-studentsRouter =  route [
-                  (    "", method GET    studentsRouteIndex)  -- Gets a list of students
-                , (    "", method POST   studentsRouteCreate) -- Creates a new student
-                , ("/:id", method GET    studentsRouteShow)   -- Gets a single student by /:id
-                , ("/:id", method PUT    studentsRouteUpdate) -- Updates a single student by /:id
-                , ("/:id", method DELETE studentsRouteDelete) -- Deletes a single student by /:id
-            ]
 
 set404AndContentType :: Snap ()
 set404AndContentType = do
@@ -50,7 +41,19 @@ set404AndContentType = do
     -- in the HTTP response body
     modifyResponse $ setHeader "Content-Type" "application/json"
 
-    
+{------------------------------------------------------------------------------------------}
+-- Start Students
+{------------------------------------------------------------------------------------------}
+
+studentsRouter :: Snap ()
+studentsRouter = route [
+                  (    "", method GET    studentsRouteIndex)  -- Gets a list of students
+                , (    "", method POST   studentsRouteCreate) -- Creates a new student
+                , ("/:id", method GET    studentsRouteShow)   -- Gets a single student by /:id
+                , ("/:id", method PUT    studentsRouteUpdate) -- Updates a single student by /:id
+                , ("/:id", method DELETE studentsRouteDelete) -- Deletes a single student by /:id
+            ]
+
 studentsRouteIndex :: Snap ()
 studentsRouteIndex = do
     -- Get the limit and start paramters (?limit=:limit&start=:start) if sent
@@ -132,3 +135,77 @@ respondWithStudent code studentIdKey student = do
     modifyResponse $ setResponseCode code
     -- Write out the student in JSON format into the response body
     writeLBS $ studentAsJSONLBS studentIdKey student
+
+{------------------------------------------------------------------------------------------}
+-- End Students
+{------------------------------------------------------------------------------------------}
+
+
+{------------------------------------------------------------------------------------------}
+-- Start Courses
+{------------------------------------------------------------------------------------------}
+
+coursesRouter :: Snap ()
+coursesRouter = route [
+                 (    "", method GET    coursesRouteIndex)
+               , (    "", method POST   coursesRouteCreate)
+               , ("/:id", method GET    coursesRouteShow)
+               , ("/:id", method PUT    coursesRouteUpdate)
+               , ("/:id", method DELETE coursesRouteDelete)
+              ]
+
+coursesRouteIndex :: Snap ()
+coursesRouteIndex = do
+    maybeLimitTo  <- getParam "limit"
+    maybeOffsetBy <- getParam "start"
+    courses <- liftIO $ getCourses maybeLimitTo maybeOffsetBy
+    modifyResponse $ setHeader "Content-Type" "application/json"
+    writeLBS $ encode $ Prelude.map entityIdToJSON courses
+
+coursesRouteCreate :: Snap ()
+coursesRouteCreate = do
+    body <- readRequestBody 50000
+    let course = courseJSONToCourse $ parseBodyToCourseJSON body
+    courseIdKey <- liftIO $ insertCourse course
+    modifyResponse $ setHeader "Content-Type" "application/json"
+    respondWithCourse 201 courseIdKey course
+
+coursesRouteShow :: Snap ()
+coursesRouteShow = do
+    set404AndContentType
+    maybeCourseId <- getParam "id"
+    (courseIdKey, maybeCourse) <- liftIO $ getCourseById maybeCourseId
+    resposndWithMaybeCourse 200 courseIdKey maybeCourse
+
+coursesRouteUpdate :: Snap ()
+coursesRouteUpdate = do
+    set404AndContentType
+    maybeCourseId <- getParam "id"
+    body <- readRequestBody 50000
+    let courseJSON = parseBodyToCourseJSON body
+    (courseIdKey, maybeCourse) <- liftIO $ updateCourseById maybeCourseId courseJSON
+    resposndWithMaybeCourse 200 courseIdKey maybeCourse
+
+coursesRouteDelete :: Snap ()
+coursesRouteDelete = do
+    set404AndContentType
+    maybeCourseId <- getParam "id"
+    (courseIdKey, maybeCourse) <- liftIO $ deleteCourseById maybeCourseId
+    resposndWithMaybeCourse 200 courseIdKey maybeCourse
+
+parseBodyToCourseJSON :: Data.ByteString.Lazy.ByteString -> CourseJSON
+parseBodyToCourseJSON body = fromMaybe (CourseJSON (Just "") (Just "") (Just "") (Just 0)) (decode body :: Maybe CourseJSON)
+
+resposndWithMaybeCourse :: Int -> Key Course -> Maybe Course -> Snap ()
+resposndWithMaybeCourse code courseIdKey maybeCourse = case maybeCourse of
+    Nothing -> writeBS ("{\"error\": \"Not found.\"}" :: Data.ByteString.ByteString)
+    Just course -> respondWithCourse code courseIdKey course
+
+respondWithCourse :: Int -> Key Course -> Course -> Snap ()
+respondWithCourse code courseIdKey course = do
+    modifyResponse $ setResponseCode code
+    writeLBS $ courseAsJSONLBS courseIdKey course
+
+{------------------------------------------------------------------------------------------}
+-- End Courses
+{------------------------------------------------------------------------------------------}

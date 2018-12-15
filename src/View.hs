@@ -9,8 +9,11 @@
 
 module View (
     StudentJSON(..),
+    CourseJSON(..),
     studentJSONToStudent,
-    studentAsJSONLBS
+    studentAsJSONLBS,
+    courseJSONToCourse,
+    courseAsJSONLBS
 ) where
 
 
@@ -46,11 +49,11 @@ data StudentJSON = StudentJSON {
 } deriving (Show, Generic)
 
 
-data CoursesJSON = CoursesJSON {
-    title      :: Maybe String,
-    code       :: Maybe String,
-    department :: Maybe String,
-    credits    :: Maybe Int
+data CourseJSON = CourseJSON {
+    courseJSONTitle      :: Maybe String,
+    courseJSONCode       :: Maybe String,
+    courseJSONDepartment :: Maybe String,
+    courseJSONCredits    :: Maybe Int
 } deriving (Show, Generic)
 
 
@@ -59,11 +62,16 @@ data CoursePrerequisiteJSON = CoursePrerequisiteJSON {
     prereq       :: Maybe [String]
 } deriving (Show, Generic)
 
+
 data StudentCoursesJSON = StudentCoursesJSON {
     studentId           :: Maybe Int,
     courseGradeList     :: Maybe [CourseGrade]
 } deriving (Show, Generic)
 
+
+{------------------------------------------------------------------------------------------}
+-- Start Students
+{------------------------------------------------------------------------------------------}
 
 instance FromJSON StudentJSON where
     parseJSON (Object v) =
@@ -73,7 +81,7 @@ instance FromJSON StudentJSON where
                     <*> v .:?  "year"
 
 instance ToJSON StudentJSON where
-    toJSON (StudentJSON fname lname email yr) = object ["firstname" .= fname, 
+    toJSON (StudentJSON fname lname email yr) = object ["firstname" .= fname,
                                                         "lastname"  .= lname,
                                                         "email"     .= email,
                                                         "year"      .= yr]
@@ -87,4 +95,38 @@ studentJSONToStudent studentJSON = Student fname lname eml yr
 
 studentAsJSONLBS :: Key Student -> Student -> Data.ByteString.Lazy.ByteString
 studentAsJSONLBS k s = encode . entityIdToJSON $ Entity k s
-                                                        
+
+{------------------------------------------------------------------------------------------}
+-- End Students
+{------------------------------------------------------------------------------------------}
+
+{------------------------------------------------------------------------------------------}
+-- Start Courses
+{------------------------------------------------------------------------------------------}
+
+instance FromJSON CourseJSON where
+  parseJSON (Object v) =
+        CourseJSON <$> v .:? "title"
+                    <*> v .:? "code"
+                    <*> v .:? "department"
+                    <*> v .:? "credits"
+
+instance ToJSON CourseJSON where
+  toJSON (CourseJSON titl code dept crdt) = object ["title"       .= titl,
+                                                     "code"       .= code,
+                                                     "department" .= dept,
+                                                     "credits"    .= crdt]
+
+courseJSONToCourse :: CourseJSON -> Course
+courseJSONToCourse coursesJSON = Course titl code dept crdt
+    where titl = fromMaybe "" $ courseJSONTitle coursesJSON
+          code = fromMaybe "" $ courseJSONCode coursesJSON
+          dept = fromMaybe "" $ courseJSONDepartment coursesJSON
+          crdt = fromMaybe  0 $ courseJSONCredits coursesJSON
+
+courseAsJSONLBS :: Key Course -> Course -> Data.ByteString.Lazy.ByteString
+courseAsJSONLBS k s = encode . entityIdToJSON $ Entity k s
+
+{------------------------------------------------------------------------------------------}
+-- End Courses
+{------------------------------------------------------------------------------------------}
