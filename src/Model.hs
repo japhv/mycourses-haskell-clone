@@ -20,8 +20,8 @@
 module Model(
       Student(..)
     , Course(..)
-    , CoursePrequisites(..)
-    , StudentCourses(..)
+    , CoursePrequisite(..)
+    , StudentCourse(..)
     , entityDefs
     , EntityField(..)
 ) where
@@ -43,22 +43,21 @@ share [mkPersist sqlSettings, mkSave "entityDefs", mkDeleteCascade sqlSettings][
     firstname          String
     lastname           String
     email              String
-    status             String
+    year               String
     UniqueEmail        email
     deriving Show Generic
   Course json
     title              String
     code               String
     department         String
-    numberOfCredits    Int 
+    credits            Int 
     UniqueCode         code
     deriving Show Generic
-  CoursePrequisites
+  CoursePrequisite
     courseId           CourseId
     prereqId           CourseId   Maybe default=NULL
-  StudentCourses
+  StudentCourse
     studentId          StudentId
-    courseId           CourseId      Maybe default=NULL
+    courseId           CourseId   Maybe default=NULL
     grade              String
-  
 |]
