@@ -6,7 +6,14 @@
 {-# LANGUAGE OverloadedStrings #-} -- Language Extensions
 
 
-module Database where
+module Database (
+    dbMigration
+  , getStudents
+  , getStudentById
+  , insertStudent
+  , updateStudentById
+  , deleteStudentById
+) where
 
 
 import Model
@@ -41,15 +48,9 @@ sqliteConnString = do
   maybeDbConnString <- lookupEnv "MYCOURSES_DB_CONN"
   return $ Data.Text.pack $ fromMaybe "mycourses_vlone_default.db" maybeDbConnString
 
-
--- enableForeignKeys :: Sqlite.Connection -> IO ()
--- enableForeignKeys conn = Sqlite.prepare conn "PRAGMA foreign_keys = ON;" >>= void . Sqlite.step
-
 withDbRun :: SqlPersistT (NoLoggingT (ResourceT IO)) b -> IO b
 withDbRun command = do
     connString <- sqliteConnString
-    -- conn <- Sqlite.open connString
-    -- enableForeignKeys conn
     runSqlite connString command
 
 -- This will create our model tables if it does not already exist
@@ -63,3 +64,77 @@ dbMigration = do
     withDbRun $ runMigration $ migrate entityDefs $ entityDef (Nothing :: Maybe StudentCourse)
 
 
+-- Helper function to convert the URL ID string to the needed 64 bit integer primary key
+
+getStudentIdKey :: Maybe Data.ByteString.ByteString -> Key Student
+getStudentIdKey maybeIdBS = toSqlKey studentIdInt64
+    where
+        studentIdBS = fromMaybe ("-1" :: Data.ByteString.ByteString) maybeIdBS
+        studentIdInt64 = read (Data.ByteString.Char8.unpack studentIdBS) :: Int64
+
+
+insertStudent :: Student -> IO (Key Student)
+-- Create a new Student row in the database
+insertStudent student = withDbRun $ DbSql.insert student
+
+getStudents :: Maybe Data.ByteString.ByteString -> Maybe Data.ByteString.ByteString -> IO [Entity Student]
+getStudents maybeLimitTo maybeOffsetBy = do
+  -- If the limit and offset are `Nothing`, we will use the defaults 10 for the limit and 0 for the offset
+  let limitToBS  = fromMaybe ("10" :: Data.ByteString.ByteString) maybeLimitTo
+  let offsetByBS = fromMaybe ("0" :: Data.ByteString.ByteString) maybeOffsetBy
+  -- Converts the strings to integers
+  let limitToInt  = read (Data.ByteString.Char8.unpack limitToBS) :: Int
+  let offsetByInt = read (Data.ByteString.Char8.unpack offsetByBS) :: Int
+  -- The actual database call
+  withDbRun $ DbSql.selectList ([] :: [Filter Student]) [LimitTo limitToInt, OffsetBy offsetByInt]
+
+
+getStudentById :: Maybe Data.ByteString.ByteString -> IO (Key Student, Maybe Student)
+getStudentById maybeIdBS = do
+    -- Get the student primary key
+    let studentIdKey = getStudentIdKey maybeIdBS
+    -- Retrieve the student from the database
+    maybeStudent <- withDbRun $ DbSql.get studentIdKey
+    -- Return both the primary key and maybe the student (if it actually exists in the database)
+    return (studentIdKey, maybeStudent)
+
+
+updateStudentById :: Maybe Data.ByteString.ByteString -> StudentJSON -> IO (Key Student, Maybe Student)
+updateStudentById maybeIdBS studentJSON = do
+    let studentIdKey = getStudentIdKey maybeIdBS
+    -- Look up the student in the database
+    (studentKeyId, maybeStudent) <- getStudentById maybeIdBS
+    case maybeStudent of
+        -- If the student does not exist, return `Nothing`
+        Nothing -> return (studentKeyId, Nothing)
+        -- If the student does exist
+        Just student -> do
+            -- Create an updated student record
+            let studentUpdated = Student {
+                studentFirstname = fromMaybe (studentFirstname student) (studentJSONFirstname studentJSON),
+                studentLastname = fromMaybe (studentLastname student) (studentJSONLastname studentJSON),
+                studentEmail = fromMaybe (studentEmail student) (studentJSONEmail studentJSON),
+                studentYear = fromMaybe (studentYear student) (studentJSONYear studentJSON)
+            }
+            -- Update the student's fields in the database
+            withDbRun $ DbSql.update studentKeyId [
+                    StudentFirstname =. studentFirstname studentUpdated,
+                    StudentLastname  =. studentLastname studentUpdated,
+                    StudentEmail     =. studentEmail studentUpdated,
+                    StudentYear      =. studentYear studentUpdated
+                ]
+            return (studentKeyId, Just studentUpdated)
+
+deleteStudentById :: Maybe Data.ByteString.ByteString -> IO (Key Student, Maybe Student)
+deleteStudentById maybeIdBS = do
+    let studentIdKey = getStudentIdKey maybeIdBS
+    -- Look up the student in the database
+    (studentKeyId, maybeStudent) <- getStudentById maybeIdBS
+    case maybeStudent of
+        -- No student?
+        Nothing -> return (studentKeyId, Nothing)
+        -- Student?
+        Just student -> do
+            -- Delete the student from the database
+            withDbRun $ DbSql.delete studentKeyId
+            return (studentKeyId, Just student)

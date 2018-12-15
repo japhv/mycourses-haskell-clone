@@ -7,7 +7,11 @@
     OverloadedStrings
   , DeriveGeneric #-}
 
-module View where
+module View (
+    StudentJSON(..),
+    studentJSONToStudent,
+    studentAsJSONLBS
+) where
 
 
 import Model
@@ -35,10 +39,10 @@ data CourseGrade = CourseGrade {
 } deriving (Show, Generic)
 
 data StudentJSON = StudentJSON {
-    firstName :: Maybe String,
-    lastName  :: Maybe String,
-    email     :: Maybe String,
-    year      :: Maybe String
+    studentJSONFirstname :: Maybe String,
+    studentJSONLastname  :: Maybe String,
+    studentJSONEmail     :: Maybe String,
+    studentJSONYear      :: Maybe String
 } deriving (Show, Generic)
 
 
@@ -63,8 +67,8 @@ data StudentCoursesJSON = StudentCoursesJSON {
 
 instance FromJSON StudentJSON where
     parseJSON (Object v) =
-        StudentJSON <$> v .:?  "firstName"
-                    <*> v .:?  "lastName"
+        StudentJSON <$> v .:?  "firstname"
+                    <*> v .:?  "lastname"
                     <*> v .:?  "email"
                     <*> v .:?  "year"
 
@@ -74,4 +78,13 @@ instance ToJSON StudentJSON where
                                                         "email"     .= email,
                                                         "year"      .= yr]
 
+studentJSONToStudent :: StudentJSON -> Student
+studentJSONToStudent studentJSON = Student fname lname eml yr
+    where fname = fromMaybe "" $ studentJSONFirstname studentJSON
+          lname = fromMaybe "" $ studentJSONLastname studentJSON
+          eml   = fromMaybe "" $ studentJSONEmail studentJSON
+          yr    = fromMaybe "" $ studentJSONYear studentJSON
 
+studentAsJSONLBS :: Key Student -> Student -> Data.ByteString.Lazy.ByteString
+studentAsJSONLBS k s = encode . entityIdToJSON $ Entity k s
+                                                        

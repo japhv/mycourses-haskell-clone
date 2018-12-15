@@ -38,6 +38,7 @@ import Database.Persist
 import Database.Persist.Class
 import Database.Persist.TH
 
+
 share [mkPersist sqlSettings, mkSave "entityDefs", mkDeleteCascade sqlSettings][persistLowerCase|
   Student json
     firstname          String
