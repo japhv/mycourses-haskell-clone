@@ -52,6 +52,7 @@ studentsRouter = route [
                 , ("/:id", method GET    studentsRouteShow)   -- Gets a single student by /:id
                 , ("/:id", method PUT    studentsRouteUpdate) -- Updates a single student by /:id
                 , ("/:id", method DELETE studentsRouteDelete) -- Deletes a single student by /:id
+                , ("/:id/courses", studentCoursesRouter)
             ]
 
 studentsRouteIndex :: Snap ()
@@ -209,3 +210,14 @@ respondWithCourse code courseIdKey course = do
 {------------------------------------------------------------------------------------------}
 -- End Courses
 {------------------------------------------------------------------------------------------}
+
+
+{------------------------------------------------------------------------------------------}
+-- Start Students
+{------------------------------------------------------------------------------------------}
+
+studentCoursesRouter :: Snap ()
+studentCoursesRouter = route [
+                  ("",           method GET    studentsRouteIndex)  -- Gets a list of student's courses
+                , ("/:courseId", method POST   studentsRouteCreate) -- Add new course to the studnet's courses
+            ]
