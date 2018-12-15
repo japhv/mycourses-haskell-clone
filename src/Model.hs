@@ -60,5 +60,5 @@ share [mkPersist sqlSettings, mkSave "entityDefs", mkDeleteCascade sqlSettings][
   StudentCourse
     studentId          StudentId
     courseId           CourseId   Maybe default=NULL
-    grade              String
+    grade              String     Maybe default=NULL
 |]

@@ -152,7 +152,7 @@ deleteStudentById maybeIdBS = do
 
 
 {------------------------------------------------------------------------------------------}
--- Courses
+-- Start Courses
 {------------------------------------------------------------------------------------------}
 
 getCourseIdKey :: Maybe Data.ByteString.ByteString -> Key Course
@@ -211,3 +211,35 @@ deleteCourseById maybeIdBS = do
         Just course -> do
             withDbRun $ DbSql.delete courseKeyId
             return (courseKeyId, Just course)
+
+
+{------------------------------------------------------------------------------------------}
+-- End Courses
+{------------------------------------------------------------------------------------------}
+
+{------------------------------------------------------------------------------------------}
+-- Start Student Courses
+{------------------------------------------------------------------------------------------}
+
+getStudentCourseIdKeys :: Maybe Data.ByteString.ByteString -> IO [Key Course]
+getStudentCourseIdKeys maybeIdBS = do
+    let studentIdKey = getStudentIdKey maybeIdBS
+    -- Get list of courses taken by student
+    studentCourses <- withDbRun $ DbSql.selectList [StudentCourseStudentId ==. studentIdKey] []
+    return $ catMaybes [ studentCourseCourseId $ entityVal scVal | scVal <- studentCourses]
+
+
+
+getStudentCourses ::  Maybe Data.ByteString.ByteString -> IO [Entity Course]
+getStudentCourses maybeIdBS = do
+    -- Get the student primary key
+    courseIds <- getStudentCourseIdKeys maybeIdBS
+
+    withDbRun $ DbSql.selectList [CourseId <-. courseIds] []
+
+
+
+{------------------------------------------------------------------------------------------}
+-- End Student Courses
+{------------------------------------------------------------------------------------------}
+
