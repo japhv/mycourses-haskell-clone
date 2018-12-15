@@ -46,7 +46,7 @@ import Database.Persist.Sqlite as DbSql
 sqliteConnString :: IO Data.Text.Text
 sqliteConnString = do
   maybeDbConnString <- lookupEnv "MYCOURSES_DB_CONN"
-  return $ Data.Text.pack $ fromMaybe "mycourses_vlone_default.db" maybeDbConnString
+  return $ Data.Text.pack $ fromMaybe "mycourses_clone_default.db" maybeDbConnString
 
 withDbRun :: SqlPersistT (NoLoggingT (ResourceT IO)) b -> IO b
 withDbRun command = do
