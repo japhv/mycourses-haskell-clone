@@ -3,13 +3,14 @@
 Group Members:
 	  
     + Japheth Abraham
-	  + Jason St. George
+    + Jason St. George
 
 
 Instructions on how to compile/run/use the project:
     
     stack setup
-    stack build -- the stack.yaml file will automatically download and install required dependencies upon building
+    stack build -- the stack.yaml file will automatically download and install required 
+    	dependencies upon building
     ...
 
 Include descriptions of approaches attempted and then abandoned and the reasons why:
@@ -60,31 +61,39 @@ List any additional Haskell libraries required for the project (i.e., what shoul
 
 		  and just use the Int dictionary, which is faster. 
 
-		, MultiParamTypeClasses: Allows for the definition of typeclasses to have more than one parameter.
+		, MultiParamTypeClasses: Allows for the definition of typeclasses to have more than 
+			one parameter.
 		
 		, DeriveGeneric: Allows automatic deriving of instances of the Generic typeclass
 		
-		, GADTs: Generalized Algebraic Data Types, allow explicitly write types of constructors in declaration 
+		, GADTs: Generalized Algebraic Data Types, allow explicitly write types of 
+			constructors in declaration 
 		
-		, TypeFamilies: Allows association of type classes and type functions so as to simplifly carrying around
-			declarations and for defining the actual associated data type constructors right with instances.
+		, TypeFamilies: Allows association of type classes and type functions so as to 
+			simplifly carrying around declarations and for defining the actual 
+			associated data type constructors right with instances.
 		
-		, TemplateHaskell: A simplified DSL that compiles into full Haskell code, eliminates boiler-plate but is
-			NOT typesafe.
+		, TemplateHaskell: A simplified DSL that compiles into full Haskell code, eliminates 
+			boiler-plate but is NOT typesafe.
 		
-		, QuasiQuotes: A QuasiQuoter is a function that takes a string and returns a Q Exp, Q Pat, Q Type or Q [Dec].
+		, QuasiQuotes: A QuasiQuoter is a function that takes a string and returns a Q Exp, 
+			Q Pat, Q Type or Q [Dec].
 		
-		, FlexibleInstances: Allow definition of type class instances with arbitrary nested types in the instance head.
+		, FlexibleInstances: Allow definition of type class instances with arbitrary nested 
+			types in the instance head.
 		
-		, FlexibleContexts: Allow the use of complex constraints in class declaration contexts, (e.g. Show for associated Type 
-			Families and Type Functions)
+		, FlexibleContexts: Allow the use of complex constraints in class declaration contexts, 
+			(e.g. Show for associated Type Families and Type Functions)
 		
-		, StandaloneDeriving: Can derive instances for GADTs and other exotic data types, providing only that the boilerplate code 		typechecks.
+		, StandaloneDeriving: Can derive instances for GADTs and other exotic data types, 
+			provided that the boilerplate code typechecks.
 			E.g. data T a where
    				 	T1 :: T Int
    					T2 :: T Bool
 				 deriving instance Show (T a)
-			Where you can't write ... deriving( Show ) on the data type declaration for T, because T is a GADT, but you can generate the instance declaration using stand-alone deriving.
+			Where you can't write ... deriving( Show ) on the data type declaration 
+			for T, because T is a GADT, but you can generate the instance declaration 
+			using stand-alone deriving.
 
 		 #-}
 
@@ -113,7 +122,13 @@ List any additional Haskell libraries required for the project (i.e., what shoul
 		Student will have GET, POST, PUT, DELETE
 
 	+ MVC specification:
-			The model in our MVC is implemented as TemplateHaskell using Persistent, and activated by activating the GHC extensions {# TemplateHaskell, Persistent}. These allow us to speifcy the entities we wish to create in the database once at a high level, which is then compiled into full Haskell by TH [TemplateHaskell], so that the user does not have to construct large amounts of boiler-plate code.  GADTs then encode both the type of the entity and the type of the field when defining our model.  The entities we defined are: Student, Course, 
+		The model in our MVC is implemented as TemplateHaskell using Persistent, 
+		and activated by activating the GHC extensions {# TemplateHaskell, Persistent}. 
+		These allow us to speifcy the entities we wish to create in the database once at a 
+		high level, which is then compiled into full Haskell by TH [TemplateHaskell], so that 
+		the user does not have to construct large amounts of boiler-plate code.  GADTs then 
+		encode both the type of the entity and the type of the field when defining our model.  
+		The entities we defined are: Student, Course,...
 
 Briefly describe the structure of the code (what are the main components, the module dependency structure):
  
@@ -154,9 +169,10 @@ What was learned by undertaking the project:
 	paradigm, as well as what a RESTful service is and REST API protocols.
 
 	Both of us learned much about implementing an MVC paradigm in Haskell with
-	web APIs with Snap, Haskell Sandboxing, Haskell Templates, Persistence, Database connectivity in 
-	Haskell, as well as various other GHC language extensions that are super helpful, 
-	including Type Families, Multi Parameter Type Classes, and GADTs, lifting (fmap is a lifting operation), ...
+	web APIs with Snap, Haskell Sandboxing, Haskell Templates, Persistence, Database 
+	connectivity in Haskell, as well as various other GHC language extensions that are 
+	very helpful, including Type Families, Multi Parameter Type Classes, and GADTs, 
+	lifting (fmap is a lifting operation), ...
 
 Challenges:
   
