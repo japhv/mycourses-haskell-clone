@@ -17,6 +17,8 @@
   , FlexibleContexts
   , StandaloneDeriving #-}
 
+  {-# OPTIONS -fno-warn-unused-imports #-}
+
 module Model(
       Student(..)
     , Course(..)
@@ -56,7 +58,7 @@ share [mkPersist sqlSettings, mkSave "entityDefs", mkDeleteCascade sqlSettings][
     deriving Show Generic
   CoursePrequisite
     courseId           CourseId
-    prereqId           CourseId   Maybe default=NULL
+    prereqId           CourseId
   StudentCourse json
     studentId          StudentId
     courseId           CourseId   Maybe default=NULL

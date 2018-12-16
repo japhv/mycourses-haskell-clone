@@ -5,6 +5,7 @@
 
 {-# LANGUAGE OverloadedStrings #-} -- Language Extensions
 
+{-# OPTIONS -fno-warn-unused-imports #-}
 
 module Database (
     dbMigration
@@ -263,9 +264,8 @@ getCoursePrereqs :: Maybe Data.ByteString.ByteString -> IO (Key Course, [Key Cou
 getCoursePrereqs maybeIdBS = do
     let courseIdKey = getCourseIdKey maybeIdBS
     prereqCourses <- withDbRun $ DbSql.selectList [CoursePrequisiteCourseId ==. courseIdKey] []
-    let courses = [coursePrequisiteCourseId $ entityVal cVal | cVal <- prereqCourses]
-
-    return (courseIdKey, courses)
+    let prereqs = [coursePrequisitePrereqId $ entityVal cVal | cVal <- prereqCourses]
+    return (courseIdKey, prereqs)
 
 
 {------------------------------------------------------------------------------------------}

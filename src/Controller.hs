@@ -5,6 +5,8 @@
 
 {-# LANGUAGE OverloadedStrings #-}
 
+{-# OPTIONS -fno-warn-unused-imports #-}
+
 module Controller (
     mainRouter
 ) where

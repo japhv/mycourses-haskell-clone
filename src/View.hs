@@ -7,6 +7,8 @@
     OverloadedStrings
   , DeriveGeneric #-}
 
+{-# OPTIONS -fno-warn-unused-imports #-}
+
 module View (
     StudentJSON(..),
     CourseJSON(..),
