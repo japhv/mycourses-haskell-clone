@@ -218,6 +218,13 @@ respondWithCourse code courseIdKey course = do
 
 studentCoursesRouter :: Snap ()
 studentCoursesRouter = route [
-                  ("",           method GET    studentsRouteIndex)  -- Gets a list of student's courses
-                , ("/:courseId", method POST   studentsRouteCreate) -- Add new course to the studnet's courses
+                  ("",           method GET    studentsCoursesRouteIndex)  -- Gets a list of student's courses
+                , ("/:courseId", method POST   studentsCoursesRouteCreate) -- Add new course to the studnet's courses
             ]
+
+
+studentsCoursesRouteIndex :: Snap ()
+studentsCoursesRouteIndex = undefined
+
+studentsCoursesRouteCreate :: Snap ()
+studentsCoursesRouteCreate = undefined

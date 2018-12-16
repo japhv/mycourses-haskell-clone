@@ -16,6 +16,7 @@ library
                      , Lib
   ghc-options:         -ddump-minimal-imports -fwarn-unused-imports
   build-depends:       base >= 4.7 && < 5
+                     , containers
                      , snap == 1.1.*
                      , text
                      , hashmap
