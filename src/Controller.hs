@@ -122,7 +122,7 @@ parseBodyToStudentJSON :: Data.ByteString.Lazy.ByteString -> StudentJSON
 -- Parse a raw HTTP body into a `StudentJSON` record
 parseBodyToStudentJSON body = fromMaybe (StudentJSON (Just "") (Just "") (Just "") (Just "")) (decode body :: Maybe StudentJSON)
 
-resposndWithMaybeStudent :: Int -> Key Student -> Maybe Student -> Snap()
+resposndWithMaybeStudent :: Int -> Key Student -> Maybe Student -> Snap ()
 resposndWithMaybeStudent code studentIdKey maybeStudent = case maybeStudent of
     -- Student not found?
     Nothing -> writeBS ("{\"error\": \"Not found.\"}" :: Data.ByteString.ByteString)
@@ -130,7 +130,7 @@ resposndWithMaybeStudent code studentIdKey maybeStudent = case maybeStudent of
     -- The code is the HTTP status code
     Just student -> respondWithStudent code studentIdKey student
 
-respondWithStudent :: Int -> Key Student -> Student -> Snap()
+respondWithStudent :: Int -> Key Student -> Student -> Snap ()
 respondWithStudent code studentIdKey student = do
     -- Set the HTTP status code
     modifyResponse $ setResponseCode code
@@ -207,13 +207,14 @@ respondWithCourse code courseIdKey course = do
     modifyResponse $ setResponseCode code
     writeLBS $ courseAsJSONLBS courseIdKey course
 
+
 {------------------------------------------------------------------------------------------}
 -- End Courses
 {------------------------------------------------------------------------------------------}
 
 
 {------------------------------------------------------------------------------------------}
--- Start Students
+-- Start Student Course
 {------------------------------------------------------------------------------------------}
 
 studentCoursesRouter :: Snap ()
@@ -222,9 +223,20 @@ studentCoursesRouter = route [
                 , ("/:courseId", method POST   studentsCoursesRouteCreate) -- Add new course to the studnet's courses
             ]
 
-
 studentsCoursesRouteIndex :: Snap ()
 studentsCoursesRouteIndex = undefined
 
 studentsCoursesRouteCreate :: Snap ()
-studentsCoursesRouteCreate = undefined
+studentsCoursesRouteCreate = do
+    maybeCourseId <- getParam "courseId"
+    maybeStudentId <- getParam "id"
+    pass <- liftIO $ prereqCheck maybeStudentId maybeCourseId
+    modifyResponse $ setHeader "Content-Type" "application/json"
+    if pass
+      then do
+        liftIO $ insertStudentCourse maybeStudentId maybeCourseId
+        modifyResponse $ setResponseCode 201
+        writeBS ("{\"message\": \"Course added successfully\"}" :: Data.ByteString.ByteString)
+      else do
+        modifyResponse $ setResponseCode 403
+        writeBS ("{\"message\": \"Prerequisites not satisfied\"}" :: Data.ByteString.ByteString)

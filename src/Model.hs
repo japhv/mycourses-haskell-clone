@@ -51,7 +51,7 @@ share [mkPersist sqlSettings, mkSave "entityDefs", mkDeleteCascade sqlSettings][
     title              String
     code               String
     department         String
-    credits            Int 
+    credits            Int
     UniqueCode         code
     deriving Show Generic
   CoursePrequisite

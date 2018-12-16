@@ -18,6 +18,8 @@ module Database (
   , insertCourse
   , updateCourseById
   , deleteCourseById
+  , insertStudentCourse
+  , prereqCheck
 ) where
 
 
@@ -248,7 +250,6 @@ deleteCourseById maybeIdBS = do
             withDbRun $ DbSql.delete courseKeyId
             return (courseKeyId, Just course)
 
-
 {------------------------------------------------------------------------------------------}
 -- End Courses
 {------------------------------------------------------------------------------------------}
@@ -257,14 +258,27 @@ deleteCourseById maybeIdBS = do
 -- Start Student Courses
 {------------------------------------------------------------------------------------------}
 
+insertStudentCourse :: Maybe Data.ByteString.ByteString -> Maybe Data.ByteString.ByteString -> IO (Key StudentCourse)
+insertStudentCourse maybeSIdBS maybeCIdBS = do
+          let sId = getStudentIdKey maybeSIdBS
+          let cId = Just (getCourseIdKey maybeCIdBS)
+          withDbRun $ DbSql.insert (StudentCourse sId cId (Just ""))
+
+
+prereqCheck :: Maybe Data.ByteString.ByteString -> Maybe Data.ByteString.ByteString -> IO Bool
+prereqCheck maybeSIdBS maybeCIdBS = do
+    (_, coursesTaken) <- getStudentCourseIdKeys maybeSIdBS
+    (_, prereqsReqd)  <- getCoursePrereqs maybeCIdBS
+    return $ Prelude.all (\p -> p `Prelude.elem` coursesTaken) prereqsReqd
+
+
 getStudentCourseIdKeys :: Maybe Data.ByteString.ByteString -> IO (Key Student, [Key Course])
 getStudentCourseIdKeys maybeIdBS = do
     let studentIdKey = getStudentIdKey maybeIdBS
     -- Get list of courses taken by student
     studentCourses <- withDbRun $ DbSql.selectList [StudentCourseStudentId ==. studentIdKey] []
-    let justStudentCourses = catMaybes [ studentCourseCourseId $ entityVal scVal | scVal <- studentCourses]
+    let justStudentCourses = catMaybes [studentCourseCourseId $ entityVal scVal | scVal <- studentCourses]
     return (studentIdKey, justStudentCourses)
-
 
 
 getStudentCourses ::  Maybe Data.ByteString.ByteString -> IO ([Entity Course], [Entity StudentCourse])
@@ -278,8 +292,15 @@ getStudentCourses maybeIdBS = do
     return (studentCoursesById, studentGradesById)
 
 
+getCoursePrereqs :: Maybe Data.ByteString.ByteString -> IO (Key Course, [Key Course])
+getCoursePrereqs maybeIdBS = do
+    let courseIdKey = getCourseIdKey maybeIdBS
+    prereqCourses <- withDbRun $ DbSql.selectList [CoursePrequisiteCourseId ==. courseIdKey] []
+    let courses = [coursePrequisiteCourseId $ entityVal cVal | cVal <- prereqCourses]
+
+    return (courseIdKey, courses)
+
 
 {------------------------------------------------------------------------------------------}
 -- End Student Courses
 {------------------------------------------------------------------------------------------}
-

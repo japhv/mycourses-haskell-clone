@@ -106,7 +106,7 @@ studentAsJSONLBS k s = encode . entityIdToJSON $ Entity k s
 
 instance FromJSON CourseJSON where
   parseJSON (Object v) =
-        CourseJSON <$> v .:? "title"
+        CourseJSON  <$> v .:? "title"
                     <*> v .:? "code"
                     <*> v .:? "department"
                     <*> v .:? "credits"
