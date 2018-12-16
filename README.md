@@ -206,6 +206,9 @@ What was learned by undertaking the project:
 Challenges:
   
     + The community is small, so we found we had to come up with solutions after much blood, sweat, and tears.
+    + Custom JSON structure to combine two or more Entity types for joins.
+    + There are no JOINs in the Haskell Persistent Module and had to create our own Application Level Joins.
+    + Yesod steep learning curve.
 
 NOTE:
 	+ See mycourses-clone.cabal for a more complete list imports and dependencies
