@@ -5,13 +5,43 @@ Group Members:
     + Japheth Abraham
     + Jason St. George
 
-
+## Installation
 Instructions on how to compile/run/use the project:
-    
-    stack setup
-    stack build -- the stack.yaml file will automatically download and install required 
-    	dependencies upon building
-    ...
+
+Clone repo using
+> git clone https://github.com/japhv/mycourses-haskell-clone.git
+
+> stack setup
+
+the stack.yaml file will automatically download and install required dependencies upon building
+> stack build
+
+Running the server
+> stack exec mycourses-clone-exe
+
+## API Architecture
+
+### Courses
+|   Endpoint   | REST   |  Functions			  |
+|---	       |--- 	|---				  |
+| /courses     | GET    | Gets a list of courses          |  
+| /courses     | POST   | Creates a new courses           |
+| /courses/:id | GET    | Gets a single course by /:id    |  
+| /courses/:id | PUT    | Updates a single course by /:id | 
+| /courses/:id | DELETE | Deletes a single course by /:id | 
+
+
+### Students
+|   Endpoint	| REST   |  Functions			    |
+|---		|--- 	 |---				    |
+| /students     | GET    | Gets a list of students          |  
+| /students     | POST   | Creates a new student            |
+| /students/:id | GET    | Gets a single student by /:id    |  
+| /students/:id | PUT    | Updates a single student by /:id | 
+| /students/:id | DELETE | Deletes a single student by /:id | 
+| /students/:id/courses/:courseId | POST | Creates a new course entry for a single student |   
+
+
 
 Include descriptions of approaches attempted and then abandoned and the reasons why:
 	
@@ -132,6 +162,7 @@ List any additional Haskell libraries required for the project (i.e., what shoul
 
 Briefly describe the structure of the code (what are the main components, the module dependency structure):
  
+ 
     Student json
       firstname String
       lastname String
@@ -160,20 +191,21 @@ Briefly describe the structure of the code (what are the main components, the mo
 
 What was learned by undertaking the project:
 
-	Even though one of us (Japheth) was somewhat familiar with web frameworks,
-	doing this in Haskell was enough of a learning curve to be frustrating and
-	rewarding.
-
-	(Jason) had no prior experience and learned much about creation of web services
-	applications, REST APIs and protocols, MVC (Model-View-Controller)
-	paradigm, as well as what a RESTful service is and REST API protocols.
-
+	Even though one of us was somewhat familiar with web frameworks, doing this in 
+	Haskell had a high enough learning curve to be both frustrating and rewarding.  
+	One member had no prior experience and learned much about creation of web services
+	applications, REST APIs and protocols, MVC (Model-View-Controller) paradigm, as 
+	well as what a RESTful service is, REST API protocols, Postman, Sqlite, and .  
 	Both of us learned much about implementing an MVC paradigm in Haskell with
-	web APIs with Snap, Haskell Sandboxing, Haskell Templates, Persistence, Database 
+	web APIs with Snap, Haskell Sandboxing, Haskell Templates, Persistence module, Database 
 	connectivity in Haskell, as well as various other GHC language extensions that are 
-	very helpful, including Type Families, Multi Parameter Type Classes, and GADTs, 
-	lifting (fmap is a lifting operation), ...
+	very helpful, including Type Families, Multi Parameter Type Classes, OverloadedStrings, 
+	DeriveGeneric, GADTs, lifting with LiftIO (common functions like fmap are lifting operations), 
+	JSON parsing for this specific application, and working with Lazy ByteStrings in Haskell.
 
 Challenges:
   
-    + The community is so small that we had to find solutions on our own with blood, sweat, and tears.
+    + The community is small, so we found we had to come up with solutions after much blood, sweat, and tears.
+
+NOTE:
+	+ See mycourses-clone.cabal for a more complete list imports and dependencies
