@@ -20,6 +20,7 @@ module Database (
   , deleteCourseById
   , insertStudentCourse
   , prereqCheck
+  , getStudentCourses
 ) where
 
 
@@ -37,8 +38,6 @@ import Data.ByteString.Lazy
 import Data.Maybe
 
 import Data.Aeson
-
-import qualified Data.Map as M
 
 import Control.Monad.Trans.Resource
 import Control.Monad.Trans.Control
@@ -71,41 +70,6 @@ dbMigration = do
     withDbRun $ runMigration $ migrate entityDefs $ entityDef (Nothing :: Maybe Course)
     withDbRun $ runMigration $ migrate entityDefs $ entityDef (Nothing :: Maybe CoursePrequisite)
     withDbRun $ runMigration $ migrate entityDefs $ entityDef (Nothing :: Maybe StudentCourse)
-
-{------------------------------------------------------------------------------------------}
--- Start Functions to do application level joins
-{------------------------------------------------------------------------------------------}
-
-joinTables :: (a -> Key b)
-    -> [Entity a]
-    -> [Entity b]
-    -> [(Entity a, Entity b)]
-joinTables f as bs = catMaybes . for as $ \a -> fmap (\b -> (a,b)) $ lookupRelation f a bs
-
-joinTables3 :: (a -> Key b)
-     -> (a -> Key c)
-     -> [Entity a]
-     -> [Entity b]
-     -> [Entity c]
-     -> [(Entity a, Entity b, Entity c)]
-joinTables3 f g as bs cs = catMaybes . for as $ \a ->
-                            case (lookupRelation f a bs, lookupRelation g a cs) of
-                                (Just b, Just c) -> Just (a,b,c)
-                                _                -> Nothing
-
-lookupRelation :: (a -> Key b) -> Entity a -> [Entity b] -> Maybe (Entity b)
-lookupRelation = undefined
--- lookupRelation f a bs = let k  = f $ entityVal a 
---                             vs = M.fromList $ Prelude.map (\(Entity k' v) -> (k':: String,v)) bs
---                         in fmap (Entity k) $ M.lookup (k:: String) vs
-
-
-for ::  [a] -> (a -> b) -> [b]
-for xs f = Prelude.map f xs
-
-{------------------------------------------------------------------------------------------}
--- End Functions to do application level joins
-{------------------------------------------------------------------------------------------}
 
 {------------------------------------------------------------------------------------------}
 -- Start Students
@@ -281,7 +245,7 @@ getStudentCourseIdKeys maybeIdBS = do
     return (studentIdKey, justStudentCourses)
 
 
-getStudentCourses ::  Maybe Data.ByteString.ByteString -> IO ([Entity Course], [Entity StudentCourse])
+getStudentCourses ::  Maybe Data.ByteString.ByteString -> IO [(Entity Course, Entity StudentCourse)]
 getStudentCourses maybeIdBS = do
     -- Get the student primary key
     (studentIdKey, courseIds) <- getStudentCourseIdKeys maybeIdBS
@@ -289,7 +253,10 @@ getStudentCourses maybeIdBS = do
     studentCoursesById <- withDbRun $ DbSql.selectList [CourseId <-. courseIds] []
     studentGradesById <- withDbRun $ DbSql.selectList [StudentCourseStudentId ==. studentIdKey] []
 
-    return (studentCoursesById, studentGradesById)
+    let phKey = toSqlKey (read "-1" :: Int64)
+    return [(a, b)| a <- studentCoursesById,
+                    b <- studentGradesById,
+                    (entityKey a) == fromMaybe phKey (studentCourseCourseId $ entityVal b)]
 
 
 getCoursePrereqs :: Maybe Data.ByteString.ByteString -> IO (Key Course, [Key Course])

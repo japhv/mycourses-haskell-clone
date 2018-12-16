@@ -57,7 +57,7 @@ share [mkPersist sqlSettings, mkSave "entityDefs", mkDeleteCascade sqlSettings][
   CoursePrequisite
     courseId           CourseId
     prereqId           CourseId   Maybe default=NULL
-  StudentCourse
+  StudentCourse json
     studentId          StudentId
     courseId           CourseId   Maybe default=NULL
     grade              String     Maybe default=NULL

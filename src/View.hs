@@ -13,7 +13,8 @@ module View (
     studentJSONToStudent,
     studentAsJSONLBS,
     courseJSONToCourse,
-    courseAsJSONLBS
+    courseAsJSONLBS,
+    studentCoursesAsJSONLBS
 ) where
 
 
@@ -36,9 +37,12 @@ import Database.Persist.Class
 
 -- Our "view"
 
-data CourseGrade = CourseGrade {
-    courseTitle :: String,
-    grade  :: String
+data StudentCourseJSON = StudentCourseJSON {
+    studentCourseJSONTitle :: String,
+    studentCourseJSONCode :: String,
+    studentCourseJSONDepartment :: String,
+    studentCourseJSONCredits :: Int,
+    studentCourseJSONGrade  :: Maybe String
 } deriving (Show, Generic)
 
 data StudentJSON = StudentJSON {
@@ -65,7 +69,7 @@ data CoursePrerequisiteJSON = CoursePrerequisiteJSON {
 
 data StudentCoursesJSON = StudentCoursesJSON {
     studentId           :: Maybe Int,
-    courseGradeList     :: Maybe [CourseGrade]
+    courseGradeList     :: Maybe [StudentCourseJSON]
 } deriving (Show, Generic)
 
 
@@ -130,3 +134,22 @@ courseAsJSONLBS k s = encode . entityIdToJSON $ Entity k s
 {------------------------------------------------------------------------------------------}
 -- End Courses
 {------------------------------------------------------------------------------------------}
+
+
+instance ToJSON StudentCourseJSON where
+    toJSON (StudentCourseJSON titl code dept crdt grade) = object ["title"       .= titl,
+                                                                    "code"       .= code,
+                                                                    "department" .= dept,
+                                                                    "credits"    .= crdt,
+                                                                    "grade"      .= grade]
+
+
+studentCoursesAsJSONLBS :: (Entity Course, Entity StudentCourse) -> StudentCourseJSON
+studentCoursesAsJSONLBS  (course, studentCourse) = studCourse
+    where studCourse = StudentCourseJSON {
+        studentCourseJSONTitle = courseTitle $ entityVal course,
+        studentCourseJSONCode = courseCode $ entityVal course,
+        studentCourseJSONDepartment = courseDepartment $ entityVal course,
+        studentCourseJSONCredits = courseCredits $ entityVal course,
+        studentCourseJSONGrade = studentCourseGrade $ entityVal studentCourse
+    }

@@ -224,7 +224,13 @@ studentCoursesRouter = route [
             ]
 
 studentsCoursesRouteIndex :: Snap ()
-studentsCoursesRouteIndex = undefined
+studentsCoursesRouteIndex = do
+    set404AndContentType
+    maybeStudentId <- getParam "id"
+    studentCourses <- liftIO $ getStudentCourses maybeStudentId
+    modifyResponse $ setHeader "Content-Type" "application/json"
+    writeLBS $ encode $ Prelude.map studentCoursesAsJSONLBS studentCourses
+
 
 studentsCoursesRouteCreate :: Snap ()
 studentsCoursesRouteCreate = do
