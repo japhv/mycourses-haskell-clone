@@ -39,6 +39,7 @@ Running the server
 | /students/:id | GET    | Gets a single student by /:id    |  
 | /students/:id | PUT    | Updates a single student by /:id | 
 | /students/:id | DELETE | Deletes a single student by /:id | 
+| /students/:id/courses/| Get | Gets the courses the student has taken with grades. |
 | /students/:id/courses/:courseId | POST | Creates a new course entry for a single student |   
 
 
